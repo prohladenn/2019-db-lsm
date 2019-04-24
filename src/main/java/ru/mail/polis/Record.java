@@ -8,7 +8,7 @@ import java.util.Objects;
 /**
  * Record from {@link DAO}.
  *
- * @author Dmitry Schitinin (sda1988@yandex.ru)
+ * @author Dmitry Schitinin
  */
 public class Record implements Comparable<Record> {
     private final ByteBuffer key;

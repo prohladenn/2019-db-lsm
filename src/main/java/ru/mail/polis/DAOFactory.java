@@ -25,7 +25,7 @@ import java.io.IOException;
 /**
  * Custom {@link DAO} factory.
  *
- * @author incubos
+ * @author Vadim Tsesko
  */
 public final class DAOFactory {
     static final long MAX_HEAP = 128 * 1024 * 1024;

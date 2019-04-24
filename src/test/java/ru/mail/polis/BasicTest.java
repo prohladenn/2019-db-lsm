@@ -34,7 +34,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Functional unit tests for {@link DAO} implementations.
  *
- * @author incubos
+ * @author Vadim Tsesko
  */
 class BasicTest extends TestBase {
     @Test

@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 /**
  * Unit tests for {@link Iters} facilities.
  *
- * @author Dmitry Schitinin (sda1988@yandex.ru)
+ * @author Dmitry Schitinin
  */
 class ItersTest {
     @Test

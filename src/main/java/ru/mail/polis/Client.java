@@ -31,7 +31,7 @@ import java.util.NoSuchElementException;
 /**
  * Simple console client to {@link DAO}.
  *
- * @author incubos
+ * @author Vadim Tsesko
  */
 public final class Client {
     private static final Logger log = LoggerFactory.getLogger(Client.class);

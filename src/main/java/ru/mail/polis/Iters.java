@@ -10,7 +10,7 @@ import java.util.function.Function;
 /**
  * Utility methods for iterators.
  *
- * @author Dmitry Schitinin (sda1988@yandex.ru)
+ * @author Dmitry Schitinin
  */
 public final class Iters {
 

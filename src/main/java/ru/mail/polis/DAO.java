@@ -28,14 +28,25 @@ import java.util.NoSuchElementException;
 /**
  * Storage interface.
  *
- * @author incubos
+ * @author Vadim Tsesko
+ * @author Dmitry Schitinin
  */
 public interface DAO extends Closeable {
+
+    /**
+     * Provides iterator (possibly empty) over {@link Record}s starting at "from" key (inclusive)
+     * in <b>ascending</b> order according to {@link Record#compareTo(Record)}.
+     * N.B. The iterator should be obtained as fast as possible, e.g.
+     * one should not "seek" to start point ("from" element) in linear time ;)
+     */
     @NotNull
     Iterator<Record> iterator(@NotNull ByteBuffer from) throws IOException;
 
     /**
-     * Get {@link Iterator} of {@link Record}s with keys between {@code from} inclusive and {@code to} exclusive.
+     * Provides iterator (possibly empty) over {@link Record}s starting at "from" key (inclusive)
+     * until given "to" key (exclusive) in <b>ascending</b> order according to {@link Record#compareTo(Record)}.
+     * N.B. The iterator should be obtained as fast as possible, e.g.
+     * one should not "seek" to start point ("from" element) in linear time ;)
      */
     @NotNull
     default Iterator<Record> range(
@@ -54,7 +65,9 @@ public interface DAO extends Closeable {
     }
 
     /**
-     * Get value for the {@code key} or {@link NoSuchElementException} if no value present.
+     * Obtains {@link Record} corresponding to given key.
+     *
+     * @throws NoSuchElementException if no such record
      */
     @NotNull
     default ByteBuffer get(@NotNull ByteBuffer key) throws IOException, NoSuchElementException {
@@ -71,13 +84,15 @@ public interface DAO extends Closeable {
         }
     }
 
+    /**
+     * Inserts or updates value by given key.
+     */
     void upsert(
             @NotNull ByteBuffer key,
             @NotNull ByteBuffer value) throws IOException;
 
+    /**
+     * Removes value by given key.
+     */
     void remove(@NotNull ByteBuffer key) throws IOException;
-
-    default void compact() throws IOException {
-        // Implement me when you get to stage 3
-    }
 }

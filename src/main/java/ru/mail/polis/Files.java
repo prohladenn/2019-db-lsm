@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * Utility methods for handling files.
  *
- * @author incubos
+ * @author Vadim Tsesko
  */
 final class Files {
     private Files() {
