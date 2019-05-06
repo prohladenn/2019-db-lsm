@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Checks ignoring trash files in persistent data directory.
- * 
+ *
  * @author Dmitry Schitinin
  */
 class TrashTest extends TestBase {
@@ -30,10 +30,10 @@ class TrashTest extends TestBase {
             dao.upsert(key, value);
         }
 
-        createTrashFile(data,"trash.txt");
-        createTrashFile(data,"trash.dat");
-        createTrashFile(data,"trash");
-        createTrashFile(data,"trash_0");
+        createTrashFile(data, "trash.txt");
+        createTrashFile(data, "trash.dat");
+        createTrashFile(data, "trash");
+        createTrashFile(data, "trash_0");
 
         // Load and check stored value
         try (DAO dao = DAOFactory.create(data)) {
@@ -52,10 +52,10 @@ class TrashTest extends TestBase {
             dao.upsert(key, value);
         }
 
-        createTrashFile(data,"trash.txt", randomValue());
-        createTrashFile(data,"trash.dat", randomValue());
-        createTrashFile(data,"trash", randomValue());
-        createTrashFile(data,"trash_0", randomValue());
+        createTrashFile(data, "trash.txt", randomValue());
+        createTrashFile(data, "trash.dat", randomValue());
+        createTrashFile(data, "trash", randomValue());
+        createTrashFile(data, "trash_0", randomValue());
 
         // Load and check stored value
         try (DAO dao = DAOFactory.create(data)) {
@@ -69,9 +69,9 @@ class TrashTest extends TestBase {
     }
 
     private static void createTrashFile(final File dir,
-                                        final String name, 
+                                        final String name,
                                         final ByteBuffer content) throws IOException {
-        try(final FileChannel ch = FileChannel.open(
+        try (final FileChannel ch = FileChannel.open(
                 Paths.get(dir.getAbsolutePath(), name),
                 StandardOpenOption.CREATE)) {
             ch.write(content);
