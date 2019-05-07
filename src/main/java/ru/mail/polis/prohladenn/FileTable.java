@@ -2,41 +2,39 @@ package ru.mail.polis.prohladenn;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.LongBuffer;
+import java.nio.IntBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class FileTable implements Table {
-
+public final class FileTable implements Table {
     private final int rows;
-    private final LongBuffer offsets;
+    private final IntBuffer offsets;
     private final ByteBuffer cells;
 
-    public FileTable(final File file) throws IOException {
+    FileTable(final File file) throws IOException {
         final long fileSize = file.length();
         final ByteBuffer mapped;
         try (
                 FileChannel fc = FileChannel.open(file.toPath(), StandardOpenOption.READ)) {
             assert fileSize <= Integer.MAX_VALUE;
-            mapped = fc.map(FileChannel.MapMode.READ_ONLY, 0L, fileSize).order(ByteOrder.BIG_ENDIAN);
+            mapped = fc.map(FileChannel.MapMode.READ_ONLY, 0L, fc.size()).order(ByteOrder.BIG_ENDIAN);
         }
 
-        // Rows
-        final long rowsValue = mapped.getLong((int) (fileSize - Long.BYTES));
-        assert rowsValue <= Integer.MAX_VALUE;
-        this.rows = (int) rowsValue;
+        //Rows
+        rows = mapped.getInt((int) (fileSize - Integer.BYTES));
 
         // Offset
         final ByteBuffer offsetBuffer = mapped.duplicate();
-        offsetBuffer.position(mapped.limit() - Long.BYTES * rows - Long.BYTES);
-        offsetBuffer.limit(mapped.limit() - Long.BYTES);
-        this.offsets = offsetBuffer.slice().asLongBuffer();
+        offsetBuffer.position(mapped.limit() - Integer.BYTES * rows - Integer.BYTES);
+        offsetBuffer.limit(mapped.limit() - Integer.BYTES);
+        this.offsets = offsetBuffer.slice().asIntBuffer();
 
         // Cells
         final ByteBuffer cellBuffer = mapped.duplicate();
@@ -46,14 +44,14 @@ public class FileTable implements Table {
 
     static void write(final Iterator<Cell> cells, final File to) throws IOException {
         try (FileChannel fc = FileChannel.open(to.toPath(), StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE)) {
-            final List<Long> offsets = new ArrayList<>();
-            long offset = 0;
+            final List<Integer> offsets = new ArrayList<>();
+            int offset = 0;
             while (cells.hasNext()) {
                 offsets.add(offset);
 
                 final Cell cell = cells.next();
 
-                // Key
+                //Key
                 final ByteBuffer key = cell.getKey();
                 final int keySize = cell.getKey().remaining();
                 fc.write(Bytes.fromInt(keySize));
@@ -61,10 +59,10 @@ public class FileTable implements Table {
                 fc.write(key);
                 offset += keySize;
 
-                // Value
+                //Value
                 final Value value = cell.getValue();
 
-                // Timestamp
+                //Timestamp
                 if (value.isRemoved()) {
                     fc.write(Bytes.fromLong(-cell.getValue().getTimeStamp()));
                 } else {
@@ -72,8 +70,7 @@ public class FileTable implements Table {
                 }
                 offset += Long.BYTES;
 
-                // Value
-
+                //Value
                 if (!value.isRemoved()) {
                     final ByteBuffer valueData = value.getData();
                     final int valueSize = value.getData().remaining();
@@ -82,55 +79,54 @@ public class FileTable implements Table {
                     fc.write(valueData);
                     offset += valueSize;
                 }
-
             }
+
             // Offsets
-            for (final Long anOffset : offsets) {
-                fc.write(Bytes.fromLong(anOffset));
+            for (final Integer anOffset : offsets) {
+                fc.write(Bytes.fromInt(anOffset));
             }
 
             //Cells
-            fc.write(Bytes.fromLong(offsets.size()));
+            fc.write(Bytes.fromInt(offsets.size()));
         }
     }
 
     private ByteBuffer keyAt(final int i) {
         assert 0 <= i && i < rows;
-        final long offset = offsets.get(i);
-        assert offset <= Integer.MAX_VALUE;
-        final int keySize = cells.getInt((int) offset);
+        final int offset = offsets.get(i);
+        final int keySize = cells.getInt(offset);
         final ByteBuffer key = cells.duplicate();
-        key.position((int) (offset + Integer.BYTES));
+        key.position(offset + Integer.BYTES);
         key.limit(key.position() + keySize);
         return key.slice();
     }
 
     private Cell cellAt(final int i) {
         assert 0 <= i && i < rows;
-        long offset = offsets.get(i);
-        assert offset <= Integer.MAX_VALUE;
+        int offset = offsets.get(i);
 
         //Key
-        final int keySize = cells.getInt((int) offset);
+        final int keySize = cells.getInt(offset);
         offset += Integer.BYTES;
         final ByteBuffer key = cells.duplicate();
-        key.position((int) (offset + Integer.BYTES));
+        key.position(offset);
         key.limit(key.position() + keySize);
         offset += keySize;
 
         //Timestamp
-        final long timeStamp = cells.getLong((int) offset);
+        final long timestamp = cells.getLong(offset);
         offset += Long.BYTES;
-
-        if (timeStamp < 0) {
-            return new Cell(key.slice(), new Value(-timeStamp, null));
+        if (timestamp < 0) {
+            return new Cell(key.slice(), new Value(-timestamp, null));
         } else {
-            final int valueSize = cells.getInt((int) offset);
+            final int valueSize = cells.getInt(offset);
             offset += Integer.BYTES;
             final ByteBuffer value = cells.duplicate();
-            value.position((int) offset);
-            value.limit(value.position() + valueSize);
-            return new Cell(key.slice(), new Value(timeStamp, value.slice()));
+            value.position(offset);
+            value.limit(value.position() + valueSize)
+                    .position(offset)
+                    .limit(offset + valueSize);
+            return new Cell(key.slice(), new Value(timestamp, value.slice()));
         }
     }
 
@@ -139,11 +135,11 @@ public class FileTable implements Table {
         int right = rows - 1;
         while (left <= right) {
             final int mid = left + (right - left) / 2;
-            final int cmp = from.compareTo(keyAt(mid));
+            final int cmp = keyAt(mid).compareTo(from);
             if (cmp < 0) {
-                right = mid - 1;
+                left = mid + 1;
             } else if (cmp > 0) {
-                left = mid - 1;
+                right = mid - 1;
             } else {
                 return mid;
             }
@@ -153,13 +149,13 @@ public class FileTable implements Table {
 
     @Override
     public long sizeInBytes() {
-        return 0;
+        throw new UnsupportedOperationException("");
     }
 
     @NotNull
     @Override
-    public Iterator<Cell> iterator(@NotNull ByteBuffer from) throws IOException {
-        return new Iterator<Cell>() {
+    public Iterator<Cell> iterator(@NotNull final ByteBuffer from) {
+        return new Iterator<>() {
             int next = position(from);
 
             @Override
@@ -176,12 +172,13 @@ public class FileTable implements Table {
     }
 
     @Override
-    public void upsert(@NotNull ByteBuffer key, @NotNull ByteBuffer value) throws IOException {
+    public void upsert(@NotNull final ByteBuffer key, @NotNull final ByteBuffer value) {
         throw new UnsupportedOperationException("");
     }
 
     @Override
-    public void remove(@NotNull ByteBuffer key) throws IOException {
+    public void remove(@NotNull final ByteBuffer key) {
         throw new UnsupportedOperationException("");
     }
+
 }

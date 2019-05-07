@@ -3,50 +3,70 @@ package ru.mail.polis.prohladenn;
 import com.google.common.collect.Iterators;
 import org.jetbrains.annotations.NotNull;
 import ru.mail.polis.DAO;
+import ru.mail.polis.Iters;
 import ru.mail.polis.Record;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 
-public class LSMDao implements DAO {
-    public static final String SUFFIX = ".dat";
-    public static final String TEMP = ".tmp";
+public final class LSMDao implements DAO {
+    private static final String SUFFIX = ".dat";
+    private static final String TEMP = ".tmp";
 
-    private Table memTable = new MemTable();
+    private Table memTable;
     private final long flushThreshold;
     private final File base;
     private int generation;
+    private final Collection<FileTable> fileTables;
 
     public LSMDao(
             final File base,
-            final long flushThreshold) {
-        this.base = base;
+            final long flushThreshold) throws IOException {
+        memTable = new MemTable();
         assert flushThreshold >= 0L;
         this.flushThreshold = flushThreshold;
-        final Collection<Path> files = new ArrayList<>();
-        Files.walk(base.toPath(), 1).filter(path -> path.getFileName().toString().endsWith(SUFFIX)).;
+        this.base = base;
+        fileTables = new ArrayList<>();
+        Files.walkFileTree(base.toPath(), new SimpleFileVisitor<>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                fileTables.add(new FileTable(file.toFile()));
+                return FileVisitResult.CONTINUE;
+            }
+        });
     }
-    //список таблиц fileTable и поиск по ним
 
     @NotNull
     @Override
     public Iterator<Record> iterator(@NotNull ByteBuffer from) throws IOException {
-        //Iterators.mergeSorted(/*ТУТ ИЩЕМ ПО ОСТАЛЬНЫМ ТАБЛИЦАМ*/)
-        final Iterator<Cell> cells = memTable.iterator(from);
+        final ArrayList<Iterator<Cell>> filesIterators = new ArrayList<>();
+        for (final FileTable fileTable : fileTables) {
+            filesIterators.add(fileTable.iterator(from));
+        }
+        filesIterators.add(memTable.iterator(from));
+        final Iterator<Cell> cells =
+                Iters.collapseEquals(
+                        Iterators.mergeSorted(filesIterators, Cell.COMPARATOR),
+                        Cell::getKey);
         final Iterator<Cell> alive =
                 Iterators.filter(
                         cells,
-                        cell -> !cell.getValue().isRemoved());
+                        cell -> {
+                            assert cell != null;
+                            return !cell.getValue().isRemoved();
+                        });
         return Iterators.transform(
                 alive,
-                cell -> Record.of(cell.getKey(), cell.getValue().getData()));
+                cell -> {
+                    assert cell != null;
+                    return Record.of(cell.getKey(), cell.getValue().getData());
+                });
     }
 
     @Override
@@ -69,10 +89,13 @@ public class LSMDao implements DAO {
     @Override
     public void remove(@NotNull ByteBuffer key) throws IOException {
         memTable.remove(key);
+        if (memTable.sizeInBytes() > flushThreshold) {
+            flush();
+        }
     }
 
     @Override
     public void close() throws IOException {
-
+        flush();
     }
 }
