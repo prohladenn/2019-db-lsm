@@ -30,7 +30,7 @@ public final class LSMDao implements DAO {
     private final Collection<FileTable> fileTables;
 
     /**
-     * My NoSQL DAO
+     * My NoSQL DAO.
      *
      * @param base           directory of DB
      * @param flushThreshold maxsize of @memTable

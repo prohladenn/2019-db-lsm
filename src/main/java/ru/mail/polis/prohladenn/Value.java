@@ -5,10 +5,15 @@ import org.jetbrains.annotations.NotNull;
 import java.nio.ByteBuffer;
 
 public final class Value implements Comparable<Value> {
-
     private final long ts;
     private final ByteBuffer data;
 
+    /**
+     * Represent the data with timestamps.
+     *
+     * @param ts   timestamp
+     * @param data any data for DB
+     */
     public Value(final long ts, final ByteBuffer data) {
         assert ts >= 0;
         this.ts = ts;
@@ -27,6 +32,11 @@ public final class Value implements Comparable<Value> {
         return data == null;
     }
 
+    /**
+     * Method for get data from DB.
+     *
+     * @return data from DB
+     */
     public ByteBuffer getData() {
         if (data == null) {
             throw new IllegalArgumentException("");
