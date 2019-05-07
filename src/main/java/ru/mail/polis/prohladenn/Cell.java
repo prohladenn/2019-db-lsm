@@ -11,7 +11,7 @@ public class Cell {
     private final ByteBuffer key;
     private final Value value;
 
-    public Cell(ByteBuffer key, Value value) {
+    public Cell(final ByteBuffer key, final Value value) {
         this.key = key;
         this.value = value;
     }

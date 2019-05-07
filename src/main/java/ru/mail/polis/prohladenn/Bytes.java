@@ -3,7 +3,7 @@ package ru.mail.polis.prohladenn;
 import java.nio.ByteBuffer;
 
 public final class Bytes {
-    public Bytes() {
+    private Bytes() {
     }
 
     static ByteBuffer fromInt(final int value) {

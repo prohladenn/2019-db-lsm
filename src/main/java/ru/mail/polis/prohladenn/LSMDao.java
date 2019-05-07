@@ -9,7 +9,11 @@ import ru.mail.polis.Record;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.file.*;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -25,6 +29,13 @@ public final class LSMDao implements DAO {
     private int generation;
     private final Collection<FileTable> fileTables;
 
+    /**
+     * My NoSQL DAO
+     *
+     * @param base           directory of DB
+     * @param flushThreshold maxsize of @memTable
+     * @throws IOException If an IO error occurs
+     */
     public LSMDao(
             final File base,
             final long flushThreshold) throws IOException {
@@ -35,7 +46,7 @@ public final class LSMDao implements DAO {
         fileTables = new ArrayList<>();
         Files.walkFileTree(base.toPath(), new SimpleFileVisitor<>() {
             @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+            public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) throws IOException {
                 fileTables.add(new FileTable(file.toFile()));
                 return FileVisitResult.CONTINUE;
             }
@@ -44,7 +55,7 @@ public final class LSMDao implements DAO {
 
     @NotNull
     @Override
-    public Iterator<Record> iterator(@NotNull ByteBuffer from) throws IOException {
+    public Iterator<Record> iterator(@NotNull final ByteBuffer from) throws IOException {
         final ArrayList<Iterator<Cell>> filesIterators = new ArrayList<>();
         for (final FileTable fileTable : fileTables) {
             filesIterators.add(fileTable.iterator(from));
@@ -70,7 +81,7 @@ public final class LSMDao implements DAO {
     }
 
     @Override
-    public void upsert(@NotNull ByteBuffer key, @NotNull ByteBuffer value) throws IOException {
+    public void upsert(final @NotNull ByteBuffer key, final @NotNull ByteBuffer value) throws IOException {
         memTable.upsert(key, value);
         if (memTable.sizeInBytes() > flushThreshold) {
             flush();
@@ -87,7 +98,7 @@ public final class LSMDao implements DAO {
     }
 
     @Override
-    public void remove(@NotNull ByteBuffer key) throws IOException {
+    public void remove(@NotNull final ByteBuffer key) throws IOException {
         memTable.remove(key);
         if (memTable.sizeInBytes() > flushThreshold) {
             flush();

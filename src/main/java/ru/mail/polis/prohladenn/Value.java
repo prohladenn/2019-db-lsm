@@ -3,7 +3,6 @@ package ru.mail.polis.prohladenn;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.ByteBuffer;
-import java.util.Comparator;
 
 public final class Value implements Comparable<Value> {
 
@@ -11,7 +10,7 @@ public final class Value implements Comparable<Value> {
     private final ByteBuffer data;
 
     public Value(final long ts, final ByteBuffer data) {
-        assert (ts >= 0);
+        assert ts >= 0;
         this.ts = ts;
         this.data = data;
     }
@@ -36,7 +35,7 @@ public final class Value implements Comparable<Value> {
     }
 
     @Override
-    public int compareTo(@NotNull Value o) {
+    public int compareTo(@NotNull final Value o) {
         return -Long.compare(ts, o.ts);
     }
 
