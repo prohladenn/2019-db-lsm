@@ -2,20 +2,15 @@ package ru.mail.polis.prohladenn;
 
 import org.jetbrains.annotations.NotNull;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.nio.ByteBuffer;
 
 public final class Value implements Comparable<Value> {
     private final long ts;
     private final ByteBuffer data;
 
-    /**
-     * Represent the data with timestamps.
-     *
-     * @param ts   timestamp
-     * @param data any data for DB
-     */
-    public Value(final long ts, final ByteBuffer data) {
-        assert ts >= 0;
+    Value(final long ts, final ByteBuffer data) {
         this.ts = ts;
         this.data = data;
     }
@@ -24,22 +19,17 @@ public final class Value implements Comparable<Value> {
         return new Value(System.nanoTime(), data.duplicate());
     }
 
-    public static Value tombstone() {
+    static Value tombstone() {
         return new Value(System.nanoTime(), null);
     }
 
-    public boolean isRemoved() {
+    boolean isRemoved() {
         return data == null;
     }
 
-    /**
-     * Method for get data from DB.
-     *
-     * @return data from DB
-     */
-    public ByteBuffer getData() {
+    ByteBuffer getData() {
         if (data == null) {
-            throw new IllegalArgumentException("");
+            throw new IllegalArgumentException("Cell data is null");
         }
         return data.asReadOnlyBuffer();
     }
@@ -49,7 +39,8 @@ public final class Value implements Comparable<Value> {
         return -Long.compare(ts, o.ts);
     }
 
-    public long getTimeStamp() {
+    long getTimeStamp() {
         return ts;
     }
+
 }

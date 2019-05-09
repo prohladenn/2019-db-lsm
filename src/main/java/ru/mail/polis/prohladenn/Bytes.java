@@ -2,7 +2,7 @@ package ru.mail.polis.prohladenn;
 
 import java.nio.ByteBuffer;
 
-public final class Bytes {
+final class Bytes {
     private Bytes() {
     }
 
