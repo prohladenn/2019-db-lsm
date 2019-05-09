@@ -99,7 +99,8 @@ public final class LSMDao implements DAO {
 
     @Override
     public void compact() throws IOException {
-
+        String string = "Ща всё будет";
+        System.out.println(string);
     }
 
     @Override
