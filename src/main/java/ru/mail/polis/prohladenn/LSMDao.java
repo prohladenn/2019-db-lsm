@@ -17,6 +17,7 @@ import java.util.EnumSet;
 import java.util.Iterator;
 
 public final class LSMDao implements DAO {
+    private static final String PREFIX = "DB";
     private static final String SUFFIX = ".dat";
     private static final String TEMP = ".tmp";
 
@@ -44,7 +45,7 @@ public final class LSMDao implements DAO {
         Files.walkFileTree(base.toPath(), EnumSet.of(FileVisitOption.FOLLOW_LINKS), 1, new SimpleFileVisitor<>() {
             @Override
             public FileVisitResult visitFile(final Path path, final BasicFileAttributes attrs) throws IOException {
-                if (path.getFileName().toString().endsWith(SUFFIX)) {
+                if (path.getFileName().toString().startsWith(PREFIX) && path.getFileName().toString().endsWith(SUFFIX)) {
                     fileTables.add(new FileTable(path.toFile()));
                     generation++;
                 }
@@ -89,9 +90,9 @@ public final class LSMDao implements DAO {
     }
 
     private void flush() throws IOException {
-        final File tmp = new File(base, generation + TEMP);
+        final File tmp = new File(base, PREFIX + generation + TEMP);
         FileTable.write(memTable.iterator(ByteBuffer.allocate(0)), tmp);
-        final File dest = new File(base, generation + SUFFIX);
+        final File dest = new File(base, PREFIX + generation + SUFFIX);
         Files.move(tmp.toPath(), dest.toPath(), StandardCopyOption.ATOMIC_MOVE);
         generation++;
         memTable = new MemTable();
