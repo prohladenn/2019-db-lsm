@@ -21,13 +21,6 @@ import java.util.Collection;
 import java.util.EnumSet;
 import java.util.Iterator;
 
-import com.google.common.collect.Iterators;
-import org.jetbrains.annotations.NotNull;
-
-import ru.mail.polis.DAO;
-import ru.mail.polis.Iters;
-import ru.mail.polis.Record;
-
 public final class LSMDao implements DAO {
     private static final String SUFFIX = ".dat";
     private static final String TEMP = ".tmp";
