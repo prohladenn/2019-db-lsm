@@ -17,6 +17,7 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.Iterator;
 
 public final class LSMDao implements DAO {
@@ -44,10 +45,13 @@ public final class LSMDao implements DAO {
         this.flushThreshold = flushThreshold;
         this.base = base;
         fileTables = new ArrayList<>();
-        Files.walkFileTree(base.toPath(), new SimpleFileVisitor<>() {
+        Files.walkFileTree(base.toPath(), EnumSet.of(FileVisitOption.FOLLOW_LINKS), 1, new SimpleFileVisitor<>() {
             @Override
-            public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) throws IOException {
-                fileTables.add(new FileTable(file.toFile()));
+            public FileVisitResult visitFile(final Path path, final BasicFileAttributes attrs) throws IOException {
+                if (path.getFileName().toString().endsWith(SUFFIX)) {
+                    fileTables.add(new FileTable(path.toFile()));
+                    generation++;
+                }
                 return FileVisitResult.CONTINUE;
             }
         });
@@ -95,6 +99,11 @@ public final class LSMDao implements DAO {
         Files.move(tmp.toPath(), dest.toPath(), StandardCopyOption.ATOMIC_MOVE);
         generation++;
         memTable = new MemTable();
+    }
+
+    @Override
+    public void compact() throws IOException {
+
     }
 
     @Override
