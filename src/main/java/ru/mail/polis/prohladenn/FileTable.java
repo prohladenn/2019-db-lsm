@@ -8,6 +8,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -18,9 +19,11 @@ public final class FileTable implements Table {
     private final IntBuffer offsets;
     private final ByteBuffer cells;
     private final long sizeInBytes;
+    private final Path path;
 
     FileTable(final File file) throws IOException {
         this.sizeInBytes = file.length();
+        this.path = file.toPath();
         assert sizeInBytes != 0 && sizeInBytes <= Integer.MAX_VALUE;
         final ByteBuffer mapped;
         try (FileChannel fc = FileChannel.open(file.toPath(), StandardOpenOption.READ)) {
@@ -189,4 +192,7 @@ public final class FileTable implements Table {
         throw new UnsupportedOperationException("");
     }
 
+    public Path getPath() {
+        return path;
+    }
 }
