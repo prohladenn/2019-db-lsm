@@ -28,7 +28,7 @@ public final class LSMDao implements DAO {
 
     private final long flushThreshold;
     private final File base;
-    private final Collection<FileTable> fileTables;
+    private Collection<FileTable> fileTables;
     private Table memTable;
     private int generation;
 
@@ -63,7 +63,7 @@ public final class LSMDao implements DAO {
                         return FileVisitResult.CONTINUE;
                     }
                 });
-        this.generation = fileTables.size() - 1;
+        this.generation = fileTables.size();
     }
 
     @NotNull
@@ -103,6 +103,7 @@ public final class LSMDao implements DAO {
     }
 
     private void flush(@NotNull final Iterator<Cell> iterator) throws IOException {
+        if (!iterator.hasNext()) return;
         final File tmp = new File(base, PREFIX + generation + TEMP);
         FileTable.write(iterator, tmp);
         final File dest = new File(base, PREFIX + generation + SUFFIX);
@@ -129,6 +130,7 @@ public final class LSMDao implements DAO {
                 e.printStackTrace();
             }
         });
+        fileTables = new ArrayList<>();
     }
 
     @Override
