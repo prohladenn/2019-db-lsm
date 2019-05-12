@@ -45,5 +45,4 @@ public final class MemTable implements Table {
             sizeInBytes -= previous.getData().remaining();
         }
     }
-
 }

@@ -40,5 +40,4 @@ public final class Value implements Comparable<Value> {
     long getTimeStamp() {
         return ts;
     }
-
 }

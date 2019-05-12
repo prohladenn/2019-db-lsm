@@ -30,7 +30,7 @@ public final class FileTable implements Table {
             mapped = fc.map(FileChannel.MapMode.READ_ONLY, 0L, fc.size()).order(ByteOrder.BIG_ENDIAN);
         }
 
-        //Rows
+        // Rows
         rows = mapped.getInt((int) (sizeInBytes - Integer.BYTES));
 
         // Offset
@@ -57,7 +57,6 @@ public final class FileTable implements Table {
      * @param to    path of the file where data needs to be written
      * @throws IOException if an I/O error occurred
      */
-
     static void write(final Iterator<Cell> cells, final File to) throws IOException {
         try (FileChannel fc = FileChannel.open(to.toPath(), StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE)) {
             final List<Integer> offsets = new ArrayList<>();
@@ -67,7 +66,7 @@ public final class FileTable implements Table {
 
                 final Cell cell = cells.next();
 
-                //Key
+                // Key
                 final ByteBuffer key = cell.getKey();
                 final int keySize = cell.getKey().remaining();
                 fc.write(Bytes.fromInt(keySize));
@@ -75,10 +74,10 @@ public final class FileTable implements Table {
                 fc.write(key);
                 offset += keySize;
 
-                //Value
+                // Value
                 final Value value = cell.getValue();
 
-                //Timestamp
+                // Timestamp
                 if (value.isRemoved()) {
                     fc.write(Bytes.fromLong(-cell.getValue().getTimeStamp()));
                 } else {
@@ -86,7 +85,7 @@ public final class FileTable implements Table {
                 }
                 offset += Long.BYTES;
 
-                //Value
+                // Value
                 if (!value.isRemoved()) {
                     final ByteBuffer valueData = value.getData();
                     final int valueSize = value.getData().remaining();
@@ -102,7 +101,7 @@ public final class FileTable implements Table {
                 fc.write(Bytes.fromInt(anOffset));
             }
 
-            //Cells
+            // Cells
             fc.write(Bytes.fromInt(offsets.size()));
         }
     }
@@ -121,7 +120,7 @@ public final class FileTable implements Table {
         assert 0 <= i && i < rows;
         int offset = offsets.get(i);
 
-        //Key
+        // Key
         final int keySize = cells.getInt(offset);
         offset += Integer.BYTES;
         final ByteBuffer key = cells.duplicate();
@@ -129,7 +128,7 @@ public final class FileTable implements Table {
         key.limit(key.position() + keySize);
         offset += keySize;
 
-        //Timestamp
+        // Timestamp
         final long timestamp = cells.getLong(offset);
         offset += Long.BYTES;
         if (timestamp < 0) {

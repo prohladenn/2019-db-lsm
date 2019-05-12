@@ -22,5 +22,4 @@ public final class Cell {
     public Value getValue() {
         return value;
     }
-
 }

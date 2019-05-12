@@ -39,26 +39,31 @@ public final class LSMDao implements DAO {
      * @param flushThreshold threshold memTable's size
      * @throws IOException if an I/O error occurred
      */
-
     public LSMDao(
             final File base,
             final long flushThreshold) throws IOException {
-        this.base = base;
         assert flushThreshold >= 0L;
+        this.base = base;
         this.flushThreshold = flushThreshold;
-        memTable = new MemTable();
-        fileTables = new ArrayList<>();
-        Files.walkFileTree(base.toPath(), EnumSet.of(FileVisitOption.FOLLOW_LINKS), 1, new SimpleFileVisitor<>() {
-            @Override
-            public FileVisitResult visitFile(final Path path, final BasicFileAttributes attrs) throws IOException {
-                if (path.getFileName().toString().endsWith(SUFFIX)
-                        && path.getFileName().toString().startsWith(PREFIX)) {
-                    fileTables.add(new FileTable(path.toFile()));
-                }
-                return FileVisitResult.CONTINUE;
-            }
-        });
-        generation = fileTables.size() - 1;
+        this.memTable = new MemTable();
+        this.fileTables = new ArrayList<>();
+        Files.walkFileTree(
+                base.toPath(),
+                EnumSet.of(FileVisitOption.FOLLOW_LINKS),
+                1,
+                new SimpleFileVisitor<>() {
+                    @Override
+                    public FileVisitResult visitFile(
+                            final Path path,
+                            final BasicFileAttributes attrs) throws IOException {
+                        if (path.getFileName().toString().endsWith(SUFFIX)
+                                && path.getFileName().toString().startsWith(PREFIX)) {
+                            fileTables.add(new FileTable(path.toFile()));
+                        }
+                        return FileVisitResult.CONTINUE;
+                    }
+                });
+        this.generation = fileTables.size() - 1;
     }
 
     @NotNull
@@ -73,12 +78,12 @@ public final class LSMDao implements DAO {
     private Iterator<Cell> cellIterator(@NotNull final ByteBuffer from) throws IOException {
         final Collection<Iterator<Cell>> filesIterators = new ArrayList<>();
 
-        //SSTables iterators
+        // SSTables iterators
         for (final FileTable fileTable : fileTables) {
             filesIterators.add(fileTable.iterator(from));
         }
 
-        //MemTable iterator
+        // MemTable iterator
         filesIterators.add(memTable.iterator(from));
         final Iterator<Cell> cells = Iters.collapseEquals(Iterators.mergeSorted(filesIterators, Cell.COMPARATOR),
                 Cell::getKey);
@@ -130,5 +135,4 @@ public final class LSMDao implements DAO {
     public void close() throws IOException {
         flush(memTable.iterator(ByteBuffer.allocate(0)));
     }
-
 }
