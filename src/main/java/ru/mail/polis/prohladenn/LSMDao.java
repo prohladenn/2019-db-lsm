@@ -57,10 +57,13 @@ public final class LSMDao implements DAO {
                     public FileVisitResult visitFile(
                             final Path path,
                             final BasicFileAttributes attrs) throws IOException {
-                        String fileName = path.getFileName().toString();
+                        final String fileName = path.getFileName().toString();
                         if (fileName.endsWith(SUFFIX)
                                 && fileName.startsWith(PREFIX)) {
-                            int fileGen = Integer.valueOf(fileName.substring(PREFIX.length(), fileName.length() - SUFFIX.length()));
+                            final int fileGen = Integer.valueOf(
+                                    fileName.substring(
+                                            PREFIX.length(),
+                                            fileName.length() - SUFFIX.length()));
                             generation = Math.max(generation, fileGen + 1);
                             fileTables.add(new FileTable(path.toFile()));
                         }
@@ -106,7 +109,6 @@ public final class LSMDao implements DAO {
     }
 
     private String flush(@NotNull final Iterator<Cell> iterator) throws IOException {
-        if (!iterator.hasNext()) return null;
         final File tmp = new File(base, PREFIX + generation + TEMP);
         FileTable.write(iterator, tmp);
         final File dest = new File(base, PREFIX + generation + SUFFIX);
