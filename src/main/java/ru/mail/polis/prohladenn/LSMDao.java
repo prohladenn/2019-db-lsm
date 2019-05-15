@@ -47,6 +47,7 @@ public final class LSMDao implements DAO {
         this.flushThreshold = flushThreshold;
         this.memTable = new MemTable();
         this.fileTables = new ArrayList<>();
+        this.generation = 0;
         Files.walkFileTree(
                 base.toPath(),
                 EnumSet.of(FileVisitOption.FOLLOW_LINKS),
@@ -56,14 +57,16 @@ public final class LSMDao implements DAO {
                     public FileVisitResult visitFile(
                             final Path path,
                             final BasicFileAttributes attrs) throws IOException {
-                        if (path.getFileName().toString().endsWith(SUFFIX)
-                                && path.getFileName().toString().startsWith(PREFIX)) {
+                        String fileName = path.getFileName().toString();
+                        if (fileName.endsWith(SUFFIX)
+                                && fileName.startsWith(PREFIX)) {
+                            int fileGen = Integer.valueOf(fileName.substring(PREFIX.length(), fileName.length() - SUFFIX.length()));
+                            generation = Math.max(generation, fileGen + 1);
                             fileTables.add(new FileTable(path.toFile()));
                         }
                         return FileVisitResult.CONTINUE;
                     }
                 });
-        this.generation = fileTables.size();
     }
 
     @NotNull
@@ -102,14 +105,15 @@ public final class LSMDao implements DAO {
         }
     }
 
-    private void flush(@NotNull final Iterator<Cell> iterator) throws IOException {
-        if (!iterator.hasNext()) return;
+    private String flush(@NotNull final Iterator<Cell> iterator) throws IOException {
+        if (!iterator.hasNext()) return null;
         final File tmp = new File(base, PREFIX + generation + TEMP);
         FileTable.write(iterator, tmp);
         final File dest = new File(base, PREFIX + generation + SUFFIX);
         Files.move(tmp.toPath(), dest.toPath(), StandardCopyOption.ATOMIC_MOVE);
         generation++;
         memTable = new MemTable();
+        return dest.toPath().toString();
     }
 
     @Override
@@ -122,7 +126,7 @@ public final class LSMDao implements DAO {
 
     @Override
     public void compact() throws IOException {
-        flush(cellIterator(ByteBuffer.allocate(0)));
+        final String res = flush(cellIterator(ByteBuffer.allocate(0)));
         fileTables.forEach(fileTable -> {
             try {
                 Files.delete(fileTable.getPath());
@@ -131,6 +135,8 @@ public final class LSMDao implements DAO {
             }
         });
         fileTables = new ArrayList<>();
+        fileTables.add(new FileTable(new File(res)));
+        memTable = new MemTable();
     }
 
     @Override
