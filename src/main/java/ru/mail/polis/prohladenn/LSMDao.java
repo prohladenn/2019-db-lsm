@@ -82,7 +82,7 @@ public final class LSMDao implements DAO {
 
     @NotNull
     private Iterator<Cell> cellIterator(@NotNull final ByteBuffer from) throws IOException {
-        final Collection<Iterator<Cell>> filesIterators = new ArrayList<>();
+        final Collection<Iterator<Cell>> filesIterators = new ArrayList<>(fileTables.size() + 1);
 
         // SSTables iterators
         for (final FileTable fileTable : fileTables) {

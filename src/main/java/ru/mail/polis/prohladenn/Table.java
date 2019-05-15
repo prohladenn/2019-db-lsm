@@ -7,7 +7,6 @@ import java.nio.ByteBuffer;
 import java.util.Iterator;
 
 public interface Table {
-
     long sizeInBytes();
 
     @NotNull
