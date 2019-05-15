@@ -138,7 +138,7 @@ public final class LSMDao implements DAO {
             }
         });
         fileTables = new ArrayList<>();
-        if (!res.equals("")) {
+        if (!res.isEmpty()) {
             fileTables.add(new FileTable(new File(res)));
             memTable = new MemTable();
         }
