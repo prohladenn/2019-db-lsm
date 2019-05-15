@@ -109,6 +109,7 @@ public final class LSMDao implements DAO {
     }
 
     private String flush(@NotNull final Iterator<Cell> iterator) throws IOException {
+        if (!iterator.hasNext()) return "";
         final File tmp = new File(base, PREFIX + generation + TEMP);
         FileTable.write(iterator, tmp);
         final File dest = new File(base, PREFIX + generation + SUFFIX);
@@ -137,8 +138,10 @@ public final class LSMDao implements DAO {
             }
         });
         fileTables = new ArrayList<>();
-        fileTables.add(new FileTable(new File(res)));
-        memTable = new MemTable();
+        if (!res.equals(" ")) {
+            fileTables.add(new FileTable(new File(res)));
+            memTable = new MemTable();
+        }
     }
 
     @Override
