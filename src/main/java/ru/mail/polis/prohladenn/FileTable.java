@@ -123,9 +123,7 @@ public final class FileTable implements Table {
         // Key
         final int keySize = cells.getInt(offset);
         offset += Integer.BYTES;
-        final ByteBuffer key = cells.duplicate();
-        key.position(offset);
-        key.limit(key.position() + keySize);
+        final ByteBuffer key = keyAt(i);
         offset += keySize;
 
         // Timestamp
