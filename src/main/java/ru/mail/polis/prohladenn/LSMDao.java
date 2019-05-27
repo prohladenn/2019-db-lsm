@@ -3,11 +3,13 @@ package ru.mail.polis.prohladenn;
 import com.google.common.collect.Iterators;
 import org.jetbrains.annotations.NotNull;
 import ru.mail.polis.DAO;
+import ru.mail.polis.DAOFactory;
 import ru.mail.polis.Iters;
 import ru.mail.polis.Record;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.nio.file.FileVisitOption;
 import java.nio.file.FileVisitResult;
@@ -29,6 +31,7 @@ public final class LSMDao implements DAO {
     private final long flushThreshold;
     private final File base;
     private Collection<FileTable> fileTables;
+    private Collection<String> snapshots;
     private Table memTable;
     private int generation;
 
@@ -47,6 +50,7 @@ public final class LSMDao implements DAO {
         this.flushThreshold = flushThreshold;
         this.memTable = new MemTable();
         this.fileTables = new ArrayList<>();
+        this.snapshots = new ArrayList<>();
         this.generation = 0;
         Files.walkFileTree(
                 base.toPath(),
@@ -145,7 +149,51 @@ public final class LSMDao implements DAO {
     }
 
     @Override
+    public DAO snapshot() throws IOException {
+        flush(memTable.iterator(ByteBuffer.allocate(0)));
+        final String snapshotPath = base.getPath() + "/snapshot" + snapshots.size();
+        snapshots.add(snapshotPath);
+        if (!new File(snapshotPath).mkdir()) {
+            throw new IOException("Ошибка создания новой папки для снапшота");
+        }
+        Files.walkFileTree(
+                base.toPath(),
+                EnumSet.of(FileVisitOption.FOLLOW_LINKS),
+                1,
+                new SimpleFileVisitor<>() {
+                    @Override
+                    public FileVisitResult visitFile(
+                            final Path path,
+                            final BasicFileAttributes attrs) throws IOException {
+                        final String fileName = path.getFileName().toString();
+                        if (fileName.endsWith(SUFFIX)
+                                && fileName.startsWith(PREFIX)) {
+                            Files.createLink(Path.of(snapshotPath + "/" + fileName), path);
+                        }
+                        return FileVisitResult.CONTINUE;
+                    }
+                });
+
+        return DAOFactory.create(new File(snapshotPath));
+    }
+
+    @Override
     public void close() throws IOException {
         flush(memTable.iterator(ByteBuffer.allocate(0)));
+        snapshots.forEach(snapshot -> {
+            final File snap = new File(snapshot);
+            for (String child : Objects.requireNonNull(snap.list())) {
+                try {
+                    Files.delete(Paths.get(snap + "/" + child));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            try {
+                Files.delete(Paths.get(snapshot));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
     }
 }
