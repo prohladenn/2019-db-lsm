@@ -9,14 +9,14 @@ import ru.mail.polis.Record;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.nio.file.FileVisitOption;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -31,7 +31,7 @@ public final class LSMDao implements DAO {
     private final long flushThreshold;
     private final File base;
     private Collection<FileTable> fileTables;
-    private Collection<String> snapshots;
+    private final Collection<String> snapshots;
     private Table memTable;
     private int generation;
 
@@ -182,7 +182,7 @@ public final class LSMDao implements DAO {
         flush(memTable.iterator(ByteBuffer.allocate(0)));
         snapshots.forEach(snapshot -> {
             final File snap = new File(snapshot);
-            for (String child : Objects.requireNonNull(snap.list())) {
+            for (final String child : snap.list()) {
                 try {
                     Files.delete(Paths.get(snap + "/" + child));
                 } catch (IOException e) {
