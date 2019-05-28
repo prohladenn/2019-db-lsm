@@ -47,8 +47,15 @@ public final class DAOFactory {
         return new LSMDao(data, MAX_HEAP / 60, false);
     }
 
+    /**
+     * Construct a {@link DAO} instance.
+     *
+     * @param data local disk folder to persist the data to
+     * @param snapshot indicates whether the DAO is a snapshot
+     * @return a storage instance
+     */
     @NotNull
-    public static DAO create(@NotNull final File data, boolean snapshot) throws IOException {
+    public static DAO create(@NotNull final File data, final boolean snapshot) throws IOException {
         if (!snapshot) {
             return create(data);
         }
@@ -56,7 +63,7 @@ public final class DAOFactory {
         return new LSMDao(data, MAX_HEAP / 60, true);
     }
 
-    private static void check(@NotNull File data) {
+    private static void check(@NotNull final File data) {
         if (Runtime.getRuntime().maxMemory() > MAX_HEAP) {
             throw new IllegalStateException("The heap is too big. Consider setting Xmx.");
         }

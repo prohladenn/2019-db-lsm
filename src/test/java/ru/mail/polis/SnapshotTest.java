@@ -26,6 +26,7 @@ class SnapshotTest extends TestBase {
             dao.upsert(key, value);
             DAO snap = dao.snapshot();
             assertEquals(value, snap.get(key));
+            snap.close();
         }
 
         for (String file : data.list()) {

@@ -46,7 +46,7 @@ public final class LSMDao implements DAO {
     public LSMDao(
             final File base,
             final long flushThreshold,
-            boolean isSnapshot) throws IOException {
+            final boolean isSnapshot) throws IOException {
         assert flushThreshold >= 0L;
         this.base = base;
         this.flushThreshold = flushThreshold;
