@@ -31,7 +31,7 @@ public final class LSMDao implements DAO {
     private final long flushThreshold;
     private final File base;
     private Collection<FileTable> fileTables;
-    private final Collection<String> snapshots;
+    private final ArrayList<String> snapshots;
     private Table memTable;
     private int generation;
 
@@ -180,20 +180,12 @@ public final class LSMDao implements DAO {
     @Override
     public void close() throws IOException {
         flush(memTable.iterator(ByteBuffer.allocate(0)));
-        snapshots.forEach(snapshot -> {
+        for (String snapshot : snapshots) {
             final File snap = new File(snapshot);
             for (final String child : snap.list()) {
-                try {
-                    Files.delete(Paths.get(snap + "/" + child));
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                Files.delete(Paths.get(snap + "/" + child));
             }
-            try {
-                Files.delete(Paths.get(snapshot));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        });
+            Files.delete(Paths.get(snapshot));
+        }
     }
 }

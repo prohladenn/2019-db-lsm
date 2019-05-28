@@ -1,37 +1,19 @@
-/*
- * Copyright 2018 (c) Vadim Tsesko <incubos@yandex.com>
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package ru.mail.polis;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.*;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Compaction tests for {@link DAO} implementations
+ * Snapshot tests for {@link DAO} implementations
  *
- * @author Vadim Tsesko <incubos@yandex.com>
+ * @author Valery Kovshov
  */
 class SnapshotTest extends TestBase {
 
@@ -43,21 +25,15 @@ class SnapshotTest extends TestBase {
         try (DAO dao = DAOFactory.create(data)) {
             dao.upsert(key, value);
             DAO snap = dao.snapshot();
-            dao.upsert(key, value);
             assertEquals(value, snap.get(key));
-            assertEquals(value, snap.get(key.duplicate()));
             assertEquals(value, dao.get(key));
-            assertEquals(value, dao.get(key.duplicate()));
         }
 
-        boolean clear = true;
         for (String file : data.list()) {
             if (file.startsWith("snapshot")) {
-                clear = false;
+                fail();
             }
         }
-        assertTrue(clear);
-
     }
 
     @Test
@@ -71,9 +47,7 @@ class SnapshotTest extends TestBase {
             DAO snap = dao.snapshot();
             dao.upsert(key, value2);
             assertEquals(value1, snap.get(key));
-            assertEquals(value1, snap.get(key.duplicate()));
             assertEquals(value2, dao.get(key));
-            assertEquals(value2, dao.get(key.duplicate()));
         }
     }
 
@@ -92,16 +66,14 @@ class SnapshotTest extends TestBase {
 
         try (DAO dao = DAOFactory.create(data)) {
             dao.upsert(key, value1);
+            DAO snap = dao.snapshot();
             for (ByteBuffer k : keys) {
                 dao.upsert(k, value);
             }
-            DAO snap = dao.snapshot();
             dao.upsert(key, value2);
             dao.compact();
             assertEquals(value1, snap.get(key));
-            assertEquals(value1, snap.get(key.duplicate()));
             assertEquals(value2, dao.get(key));
-            assertEquals(value2, dao.get(key.duplicate()));
         }
     }
 
@@ -130,9 +102,7 @@ class SnapshotTest extends TestBase {
             dao.upsert(key, value2);
             dao.compact();
             assertEquals(value1, snap.get(key));
-            assertEquals(value1, snap.get(key.duplicate()));
             assertEquals(value2, dao.get(key));
-            assertEquals(value2, dao.get(key.duplicate()));
         }
     }
 
@@ -153,13 +123,9 @@ class SnapshotTest extends TestBase {
             DAO snap3 = dao.snapshot();
             dao.upsert(key, value4);
             assertEquals(value1, snap1.get(key));
-            assertEquals(value1, snap1.get(key.duplicate()));
             assertEquals(value2, snap2.get(key));
-            assertEquals(value2, snap2.get(key.duplicate()));
             assertEquals(value3, snap3.get(key));
-            assertEquals(value3, snap3.get(key.duplicate()));
             assertEquals(value4, dao.get(key));
-            assertEquals(value4, dao.get(key.duplicate()));
         }
     }
 }
