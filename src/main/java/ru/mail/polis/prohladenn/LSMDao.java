@@ -181,7 +181,7 @@ public final class LSMDao implements DAO {
     public void close() throws IOException {
         flush(memTable.iterator(ByteBuffer.allocate(0)));
         for (final String snapshot : snapshots) {
-            for (final String child : new File(snapshot).list()) {
+            for (final Object child : Files.list(Paths.get(snapshot)).toArray()) {
                 Files.delete(Paths.get(snapshot + "/" + child));
             }
             Files.delete(Paths.get(snapshot));
