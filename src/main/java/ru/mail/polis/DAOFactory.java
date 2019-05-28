@@ -40,8 +40,23 @@ public final class DAOFactory {
      * @param data local disk folder to persist the data to
      * @return a storage instance
      */
+
     @NotNull
     public static DAO create(@NotNull final File data) throws IOException {
+        check(data);
+        return new LSMDao(data, MAX_HEAP / 60, false);
+    }
+
+    @NotNull
+    public static DAO create(@NotNull final File data, boolean snapshot) throws IOException {
+        if (!snapshot) {
+            return create(data);
+        }
+        check(data);
+        return new LSMDao(data, MAX_HEAP / 60, true);
+    }
+
+    private static void check(@NotNull File data) {
         if (Runtime.getRuntime().maxMemory() > MAX_HEAP) {
             throw new IllegalStateException("The heap is too big. Consider setting Xmx.");
         }
@@ -53,7 +68,6 @@ public final class DAOFactory {
         if (!data.isDirectory()) {
             throw new IllegalArgumentException("Path is not a directory: " + data);
         }
-
-        return new LSMDao(data, MAX_HEAP / 60);
     }
+
 }

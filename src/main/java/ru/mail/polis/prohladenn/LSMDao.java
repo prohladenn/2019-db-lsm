@@ -31,6 +31,7 @@ public final class LSMDao implements DAO {
     private final long flushThreshold;
     private final File base;
     private Collection<FileTable> fileTables;
+    private final boolean isSnapshot;
     private final Collection<String> snapshots;
     private Table memTable;
     private int generation;
@@ -44,10 +45,12 @@ public final class LSMDao implements DAO {
      */
     public LSMDao(
             final File base,
-            final long flushThreshold) throws IOException {
+            final long flushThreshold,
+            boolean isSnapshot) throws IOException {
         assert flushThreshold >= 0L;
         this.base = base;
         this.flushThreshold = flushThreshold;
+        this.isSnapshot = isSnapshot;
         this.memTable = new MemTable();
         this.fileTables = new ArrayList<>();
         this.snapshots = new ArrayList<>();
@@ -174,18 +177,17 @@ public final class LSMDao implements DAO {
                     }
                 });
 
-        return DAOFactory.create(new File(snapshotPath));
+        return DAOFactory.create(new File(snapshotPath), true);
     }
 
     @Override
     public void close() throws IOException {
         flush(memTable.iterator(ByteBuffer.allocate(0)));
-        for (final String snapshot : snapshots) {
-            File childes = new File(snapshot);
-            for (final String child : childes.list()) {
-                Files.delete(Paths.get(snapshot + "/" + child));
+        if (isSnapshot) {
+            for (final String child : base.list()) {
+                Files.delete(Paths.get(base + "/" + child));
             }
-            Files.delete(Paths.get(snapshot));
+            Files.delete(base.toPath());
         }
     }
 }
